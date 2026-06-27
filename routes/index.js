@@ -10,6 +10,8 @@ const articleRoutes = require("./articleRoutes");
 const storyRoutes = require("./storyRoutes");
 
 
+const chatController = require("../controllers/chatController");
+
 router.use("/auth", authRoutes);
 router.use("/inquiries", inquiryRoutes);
 router.use("/article-categories", articleCategoryRoutes);
@@ -18,7 +20,7 @@ router.use("/article-tags", articleTagRoutes);
 router.use("/articles", articleRoutes);
 router.use("/stories", storyRoutes);
 
-
+router.post("/chat", chatController.handleChat);
 
 
 
