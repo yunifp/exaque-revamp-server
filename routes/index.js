@@ -11,6 +11,7 @@ const storyRoutes = require("./storyRoutes");
 
 
 const chatController = require("../controllers/chatController");
+const leadController = require("../controllers/leadController");
 
 router.use("/auth", authRoutes);
 router.use("/inquiries", inquiryRoutes);
@@ -21,7 +22,7 @@ router.use("/articles", articleRoutes);
 router.use("/stories", storyRoutes);
 
 router.post("/chat", chatController.handleChat);
-
+router.post("/lead", leadController.handleLead);
 
 
 module.exports = router;

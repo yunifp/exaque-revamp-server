@@ -1,5 +1,6 @@
 const inquiryRepository = require("../repositories/inquiryRepository");
 const emailService = require("./emailService");
+const waService = require("./waService");
 const { Op } = require("sequelize"); 
 
 const createInquiry = async (inquiryData) => {
@@ -7,6 +8,12 @@ const createInquiry = async (inquiryData) => {
     
     const newInquiry = await inquiryRepository.createInquiry(inquiryData);
 
+    // Kirim Notifikasi WA ke Admin
+    try {
+      await waService.sendInquiryWhatsApp(newInquiry);
+    } catch (waError) {
+      console.error("Gagal mengirim WA Inquiry:", waError.message);
+    }
     
     try {
       const service = newInquiry.service_needed;

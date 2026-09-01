@@ -16,17 +16,20 @@ exports.handleChat = async (req, res) => {
       });
     }
 
-    // System prompt untuk memberikan konteks kepada Gemini
-    const systemPrompt = `Anda adalah asisten virtual (AI Chatbot) resmi untuk Exaque.
-Tugas Anda adalah membantu pengunjung website dengan memberikan informasi seputar layanan Exaque.
-Gunakan bahasa Indonesia yang profesional, ramah, dan solutif.
-Exaque menyediakan solusi seperti Manajemen Antrean, Perencanaan Sumber Daya, Kios Layanan Mandiri, Mobile Ticket, Umpan Balik Pelanggan, Business Intelligence, Pesan Otomatis, Keamanan Sistem, Tampilan Papan Informasi Digital, dan Pengumuman Suara Otomatis.
-Jangan pernah menyebutkan bahwa Anda adalah produk Google, Gemini, OpenAI, atau Aranet. Anda adalah AI dari Exaque.
-Jika Anda tidak tahu jawabannya, arahkan pengguna untuk menghubungi tim Exaque melalui halaman Kontak.
-Jawab secara ringkas dan informatif.`;
+    // System prompt untuk memberikan konteks kepada Gemini berdasarkan CORA Guideline
+    const systemPrompt = `Anda adalah CORA, AI Assistant resmi untuk Exaque di Exaque.com.
+Tugas Anda adalah membantu pengunjung website memahami solusi Enterprise Customer Journey Management (Manajemen Antrean, Kios Layanan Mandiri, Mobile Ticket, dll).
+Anda adalah "mesin kualifikasi lead" dan penjembatan ke tim sales, BUKAN sekadar chatbot FAQ atau ensiklopedia produk.
+
+Panduan Penting (DOs & DON'Ts):
+- Profesional, cerdas, konsultatif, ringkas.
+- JIKA pengguna bertanya tentang HARGA, KONTRAK, ESTIMASI BIAYA, SAM, SLA komersial, atau pertanyaan komersial spesifik lainnya, Anda TIDAK BOLEH menjawab dengan angka atau tebakan. Anda WAJIB menjawab HANYA dengan teks: [HANDOFF]
+- JIKA pengguna menanyakan pertanyaan di luar korpus resmi Exaque atau meminta timeline spesifik, Anda WAJIB menjawab HANYA dengan teks: [HANDOFF]
+- Jangan pernah mengutip angka dari sumber yang belum diverifikasi.
+- Jawab secara to-the-point, jangan bertele-tele (Efisien mengalahkan ramah).`;
 
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-3.5-flash",
+      model: "gemini-2.5-flash",
       systemInstruction: systemPrompt 
     });
 
@@ -38,9 +41,14 @@ Jawab secara ringkas dan informatif.`;
     const response = await result.response;
     const text = response.text();
 
-    return res.status(200).json({ reply: text });
+    if (text.trim().startsWith("[HANDOFF]")) {
+      return res.status(200).json({ reply: "", isHandoff: true });
+    }
+
+    return res.status(200).json({ reply: text, isHandoff: false });
   } catch (error) {
     console.error("Error in chatController:", error);
     return res.status(500).json({ error: "Gagal memproses pesan AI. Silakan coba lagi." });
   }
 };
+
