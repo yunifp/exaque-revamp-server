@@ -41,6 +41,13 @@ app.use(cookieParser());
 app.use(responseHandler);
 
 // =========================================================================
+// ROUTE KHUSUS YANG TIDAK BOLEH DITANGKAP PRERENDER (HARUS DI ATAS)
+// =========================================================================
+const sitemapController = require("./controllers/sitemapController");
+app.get("/sitemap.xml", sitemapController.generateSitemap);
+app.get("/sitemap.rss", sitemapController.generateRssSitemap);
+
+// =========================================================================
 // PRERENDER.IO MIDDLEWARE UNTUK SERVER-SIDE RENDERING (SSR)
 // Mengarahkan bot/crawler ke layanan Prerender agar mendapatkan HTML penuh.
 // =========================================================================
@@ -54,6 +61,7 @@ app.use(prerender);
 // =========================================================================
 
 const mainRouter = require("./routes/index");
+
 
 app.use("/api/v1", mainRouter);
 
