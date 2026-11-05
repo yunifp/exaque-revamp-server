@@ -8,37 +8,21 @@ const createInquiry = async (inquiryData) => {
     
     const newInquiry = await inquiryRepository.createInquiry(inquiryData);
 
-    // Kirim Notifikasi WA ke Admin
-    try {
-      await waService.sendInquiryWhatsApp(newInquiry);
-    } catch (waError) {
+    // Kirim Notifikasi WA ke Admin secara asynchronous di background
+    waService.sendInquiryWhatsApp(newInquiry).catch((waError) => {
       console.error("Gagal mengirim WA Inquiry:", waError.message);
-    }
-    
-    try {
-      const service = newInquiry.service_needed;
+    });
 
-      if (
-        service === "Berbicara Dengan Sales" ||
-        service === "Bantuan Teknis"
-      ) {
-        
-        await emailService.sendInquiryToAdmin(newInquiry);
-      } else if (
-        service === "Permintaan Demo" ||
-        service === "Lokasi Kantor Exaque"
-      ) {
-        
-        await emailService.sendInquiryToAdmin(newInquiry);
-        await emailService.sendConfirmationToCustomer(newInquiry);
-      }
-    } catch (emailError) {
-      
-      
-      console.error(
-        "Gagal menjalankan alur email inquiry:",
-        emailError.message
-      );
+    // Kirim Notifikasi Email ke Admin secara asynchronous di background
+    emailService.sendInquiryToAdmin(newInquiry).catch((emailError) => {
+      console.error("Gagal mengirim email ke admin:", emailError.message);
+    });
+
+    // Kirim Notifikasi Konfirmasi Email ke Pengisi Formulir (Customer)
+    if (newInquiry.email && newInquiry.email.trim() !== "") {
+      emailService.sendConfirmationToCustomer(newInquiry).catch((emailError) => {
+        console.error("Gagal mengirim konfirmasi email ke customer:", emailError.message);
+      });
     }
     
 

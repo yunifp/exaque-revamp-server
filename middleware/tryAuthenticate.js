@@ -27,7 +27,10 @@ const tryAuthenticate = (req, res, next) => {
   } catch (error) {
     
     
-    res.clearCookie("token");
+    res.clearCookie("token", {
+      domain: process.env.NODE_ENV === "production" ? ".exaque.com" : undefined,
+      path: "/",
+    });
   }
 
   next();

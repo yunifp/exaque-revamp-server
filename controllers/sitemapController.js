@@ -85,7 +85,7 @@ exports.generateSitemap = async (req, res, next) => {
       "/kisah-pelanggan",
       "/blog",
       "/faq",
-      "/panduan-sistem-manajemen-antrean"
+      "/sistem-manajemen-antrian"
     ];
 
     const pages = staticPaths.map(path => ({
@@ -220,7 +220,7 @@ exports.generateRssSitemap = async (req, res, next) => {
       "/kisah-pelanggan",
       "/blog",
       "/faq",
-      "/panduan-sistem-manajemen-antrean"
+      "/sistem-manajemen-antrian"
     ];
 
     const pages = staticPaths.map(path => {

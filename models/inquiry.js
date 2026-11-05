@@ -46,7 +46,8 @@ module.exports = (sequelize, DataTypes) => {
           "Berbicara Dengan Sales",
           "Permintaan Demo",
           "Bantuan Teknis",
-          "Lokasi Kantor Exaque"
+          "Lokasi Kantor Exaque",
+          "Managed Service Request"
         ),
         allowNull: false,
       },

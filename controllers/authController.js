@@ -7,11 +7,13 @@ const login = async (req, res) => {
     const { token, user } = await authService.loginUser(email, password);
 
     const oneDay = 24 * 60 * 60 * 1000;
+    const isProd = process.env.NODE_ENV === "production";
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
+      domain: isProd ? ".exaque.com" : undefined,
       maxAge: oneDay,
       path: "/"
     });
@@ -24,10 +26,13 @@ const login = async (req, res) => {
 
 const logout = (req, res) => {
   try {
+    const isProd = process.env.NODE_ENV === "production";
+
     res.clearCookie("token", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
+      domain: isProd ? ".exaque.com" : undefined,
       path: "/"
     });
 

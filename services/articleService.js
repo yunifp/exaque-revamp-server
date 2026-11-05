@@ -24,7 +24,9 @@ const createArticle = async (data, files) => {
   const t = await db.sequelize.transaction();
   try {
     let slug = data.slug;
-    if (!slug) {
+    if (slug) {
+      slug = slug.trim().replace(/^\/+|\/+$/g, "");
+    } else {
       slug = generateSlug(data.title);
     }
 
@@ -85,9 +87,13 @@ const updateArticle = async (id, data, files) => {
     const articleData = { ...data };
 
     if (data.slug) {
-      articleData.slug = data.slug;
+      articleData.slug = data.slug.trim().replace(/^\/+|\/+$/g, "");
     } else if (data.title && data.title !== articleToUpdate.title) {
       articleData.slug = generateSlug(data.title);
+    }
+
+    if (data.status === "published" && !articleToUpdate.published_at) {
+      articleData.published_at = new Date();
     }
 
     if (files) {

@@ -1,14 +1,20 @@
 "use strict";
 const nodemailer = require("nodemailer");
 
+const emailPort = Number(process.env.EMAIL_PORT) || 465;
+const isSecure = emailPort === 465;
+
 // 1. Buat 'Transporter' Nodemailer
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
-  port: process.env.EMAIL_PORT,
-  secure: false, // true for 465, false for other ports
+  port: emailPort,
+  secure: isSecure, // true jika port 465 (SSL), false jika port 587 / lainnya
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
+  },
+  tls: {
+    rejectUnauthorized: false, // Mencegah kegagalan SSL cert mismatch pada shared cPanel hosting
   },
 });
 
@@ -147,96 +153,176 @@ const sendInquiryToAdmin = async (inquiryData) => {
 };
 
 /**
- * Mengirim email konfirmasi ke Pelanggan
- * Menggunakan template dari user.html
+ * Mengirim email konfirmasi ke Pelanggan yang mengisi formulir
+ * Dilengkapi ucapan terima kasih profesional, ringkasan data, dan footer informasi Exaque lengkap
  */
 const sendConfirmationToCustomer = async (inquiryData) => {
-  // Template HTML User (Minified version of user.html)
   const userHtmlTemplate = `
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Permintaan Diterima - Exaque</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>Konfirmasi Permintaan - Exaque</title>
     <style>
-        body { margin: 0; padding: 0; background-color: #f4f4f4; font-family: 'Poppins', Arial, sans-serif; -webkit-font-smoothing: antialiased; }
-        table { border-collapse: collapse; width: 100%; }
+        body { margin: 0; padding: 0; background-color: #f4f5f7; font-family: 'Segoe UI', Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+        table { border-collapse: collapse; }
+        .data-row td { padding: 10px 14px; border-bottom: 1px solid #f0f0f2; vertical-align: top; font-size: 13.5px; }
+        .data-label { color: #6b7280; font-weight: 600; width: 140px; }
+        .data-val { color: #1f2937; font-weight: 500; line-height: 1.5; }
         @media screen and (max-width: 600px) {
             .email-container { width: 100% !important; }
-            .content-padding { padding: 30px 20px !important; }
-            .header-padding { padding: 25px 20px !important; }
+            .content-padding { padding: 26px 18px !important; }
+            .header-padding { padding: 24px 18px !important; }
+            .data-label { width: 105px !important; }
         }
     </style>
 </head>
-<body style="background-color: #f4f4f4; margin: 0; padding: 0;">
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f4f4; padding: 40px 0;">
+<body style="background-color: #f4f5f7; margin: 0; padding: 0;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f5f7; padding: 30px 12px;">
         <tr>
             <td align="center">
-                <table border="0" cellpadding="0" cellspacing="0" width="600" class="email-container" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.05);">
+                <table border="0" cellpadding="0" cellspacing="0" width="600" class="email-container" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); border: 1px solid #e5e7eb;">
+                    <!-- HEADER -->
                     <tr>
-                        <td align="center" class="header-padding" style="background-color: #a60046; padding: 35px;">
-                            <h1 style="color: #ffffff; font-size: 28px; font-weight: 800; margin: 0; letter-spacing: 2px;">EXAQUE</h1>
+                        <td align="center" class="header-padding" style="background: linear-gradient(135deg, #A9023A 0%, #7d012a 100%); padding: 32px 24px; text-align: center;">
+                            <h1 style="color: #ffffff; font-size: 26px; font-weight: 800; margin: 0; letter-spacing: 2px;">EXAQUE</h1>
+                            <p style="color: rgba(255,255,255,0.85); font-size: 12px; margin: 6px 0 0 0; letter-spacing: 0.5px;">PT EXAQUE MANDIRI MAKMUR</p>
                         </td>
                     </tr>
+                    <!-- MAIN CONTENT -->
                     <tr>
-                        <td class="content-padding" style="padding: 50px 50px; text-align: center;">
-                            <div style="margin-bottom: 30px;">
-                                <div style="display: inline-block; width: 60px; height: 60px; background-color: #e8f5e9; border-radius: 50%; line-height: 60px;">
-                                    <span style="color: #2e7d32; font-size: 30px; line-height: 60px; font-weight: bold;">&#10003;</span>
+                        <td class="content-padding" style="padding: 38px 40px 30px 40px;">
+                            <!-- Success Badge -->
+                            <div style="text-align: center; margin-bottom: 22px;">
+                                <div style="display: inline-block; width: 54px; height: 54px; background-color: #ecfdf5; border: 2px solid #a7f3d0; border-radius: 50%; line-height: 52px; text-align: center;">
+                                    <span style="color: #059669; font-size: 26px; font-weight: bold;">&#10003;</span>
                                 </div>
                             </div>
-                            <h2 style="color: #2c2c2c; font-size: 22px; font-weight: 700; margin: 0 0 15px 0;">Halo, {nama_user}</h2>
-                            <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 25px 0;">
-                                Terima kasih telah menghubungi kami. Permintaan Anda untuk <strong style="color: #a60046;">"Kebutuhan IT / Demo"</strong> telah berhasil kami terima.
+                            
+                            <h2 style="color: #111827; font-size: 20px; font-weight: 700; margin: 0 0 12px 0; text-align: center;">
+                                Halo, {nama_user}
+                            </h2>
+                            
+                            <p style="color: #4b5563; font-size: 15px; line-height: 1.6; margin: 0 0 20px 0; text-align: center;">
+                                Terima kasih telah menghubungi <strong>PT Exaque Mandiri Makmur</strong>. Formulir dan data permintaan Anda untuk <strong>{layanan}</strong> telah <strong>berhasil kami terima</strong>.
                             </p>
-                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9f9f9; border-radius: 8px; margin-bottom: 25px;">
+
+                            <!-- Alert Box -->
+                            <div style="background-color: #fdf2f5; border-left: 4px solid #A9023A; border-radius: 6px; padding: 14px 18px; margin-bottom: 26px;">
+                                <p style="color: #8b0c36; font-size: 13.5px; line-height: 1.55; margin: 0; font-weight: 500;">
+                                    Tim spesialis kami akan segera meninjau data Anda dan menghubungi Anda kembali dalam waktu maksimal <strong>1x24 jam kerja</strong> untuk berdiskusi lebih lanjut.
+                                </p>
+                            </div>
+
+                            <!-- Data Summary Table -->
+                            <h3 style="color: #1f2937; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 10px 0;">
+                                Rincian Formulir yang Dikirimkan:
+                            </h3>
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #fbfbfb; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 26px;">
+                                <tr class="data-row">
+                                    <td class="data-label">Nama Lengkap</td>
+                                    <td class="data-val"><strong>{nama_lengkap}</strong></td>
+                                </tr>
+                                <tr class="data-row">
+                                    <td class="data-label">Perusahaan</td>
+                                    <td class="data-val">{perusahaan}</td>
+                                </tr>
+                                <tr class="data-row">
+                                    <td class="data-label">Email</td>
+                                    <td class="data-val" style="color: #A9023A;">{email}</td>
+                                </tr>
+                                <tr class="data-row">
+                                    <td class="data-label">Layanan</td>
+                                    <td class="data-val"><strong>{layanan}</strong></td>
+                                </tr>
+                                <tr class="data-row">
+                                    <td class="data-label" style="border-bottom: none;">Catatan / Kebutuhan</td>
+                                    <td class="data-val" style="border-bottom: none; white-space: pre-line;">{pesan_user}</td>
+                                </tr>
+                            </table>
+
+                            <p style="color: #4b5563; font-size: 13.5px; line-height: 1.6; margin: 0 0 20px 0;">
+                                Jika Anda memiliki pertanyaan mendesak atau ingin segera terhubung dengan tim kami, Anda dapat membalas email ini secara langsung.
+                            </p>
+
+                            <p style="color: #111827; font-size: 14px; font-weight: 600; margin: 0; line-height: 1.5;">
+                                Salam hangat,<br>
+                                <span style="color: #A9023A; font-weight: 700;">Tim PT Exaque Mandiri Makmur</span>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- FOOTER INFORMASI TENTANG EXAQUE -->
+                    <tr>
+                        <td style="background-color: #18181b; padding: 26px 36px; color: #a1a1aa; font-size: 12px; line-height: 1.6; border-top: 1px solid #27272a;">
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%">
                                 <tr>
-                                    <td style="padding: 20px; text-align: center; color: #555555; font-size: 14px; line-height: 1.5;">
-                                        Tim kami sedang meninjau permintaan Anda.<br>
-                                        Kami akan menghubungi Anda kembali dalam waktu<br>
-                                        <strong>1-2 hari kerja.</strong>
+                                    <td style="padding-bottom: 12px;">
+                                        <p style="color: #ffffff; font-size: 14px; font-weight: 700; margin: 0 0 4px 0; letter-spacing: 0.5px;">
+                                            PT EXAQUE MANDIRI MAKMUR
+                                        </p>
+                                        <p style="color: #a1a1aa; font-size: 11.5px; margin: 0;">
+                                            Solusi Manajemen Antrian, Customer Journey & Managed Service Terpercaya di Indonesia sejak 2016.
+                                        </p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-bottom: 12px; border-top: 1px solid #27272a; padding-top: 12px;">
+                                        <strong style="color: #e4e4e7;">Alamat Kantor:</strong><br>
+                                        Bintaro Business Centre, Jl. RC Veteran No. 1i, Bintaro, Pesanggrahan, Jakarta Selatan, DKI Jakarta 12330
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-bottom: 12px;">
+                                        <strong style="color: #e4e4e7;">Kontak & Layanan:</strong><br>
+                                        Sales & Diskusi Solusi: <a href="mailto:sales@exaque.com" style="color: #f43f5e; text-decoration: none;">sales@exaque.com</a><br>
+                                        Informasi Umum: <a href="mailto:info@exaque.com" style="color: #f43f5e; text-decoration: none;">info@exaque.com</a> | Layanan Dukungan Teknis: <a href="mailto:support@exaque.com" style="color: #f43f5e; text-decoration: none;">support@exaque.com</a><br>
+                                        Website Resmi: <a href="https://www.exaque.com" style="color: #ffffff; text-decoration: underline;">www.exaque.com</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="center" style="border-top: 1px solid #27272a; padding-top: 12px; color: #71717a; font-size: 11px;">
+                                        &copy; 2026 PT Exaque Mandiri Makmur. Seluruh hak cipta dilindungi.
                                     </td>
                                 </tr>
                             </table>
-                            <p style="color: #2c2c2c; font-size: 16px; font-weight: 600; margin: 0;">
-                                Salam hangat,<br>Tim Exaque
-                            </p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="center" style="background-color: #2c2c2c; padding: 20px;">
-                            <p style="color: #aaaaaa; font-size: 12px; margin: 0;">
-                                &copy; 2025 EXAQUE. Celebrating 9th Anniversary.<br>
-                                <a href="https://www.exaque.com" style="color: #ffffff; text-decoration: none;">www.exaque.com</a>
-                            </p>
                         </td>
                     </tr>
                 </table>
-                <div style="height: 40px;"></div>
             </td>
         </tr>
     </table>
 </body>
 </html>`;
 
-  // Replace placeholder dengan data asli
-  const filledHtml = userHtmlTemplate.replace(
-    /{nama_user}/g,
-    inquiryData.first_name
-  );
+  const fullName = `${inquiryData.first_name || ""} ${inquiryData.last_name || ""}`.trim() || inquiryData.first_name || "Bapak/Ibu";
+  const userGreeting = inquiryData.first_name || "Bapak/Ibu";
+  const companyName = inquiryData.company && inquiryData.company !== "-" ? inquiryData.company : "-";
+  
+  let serviceName = inquiryData.service_needed || "Diskusi Kebutuhan Layanan";
+  if (inquiryData.job_title === "Exaque Managed Service" || (inquiryData.message && inquiryData.message.includes("Managed Service"))) {
+    serviceName = "Exaque Managed Service";
+  }
+
+  const filledHtml = userHtmlTemplate
+    .replace(/{nama_user}/g, userGreeting)
+    .replace(/{nama_lengkap}/g, fullName)
+    .replace(/{perusahaan}/g, companyName)
+    .replace(/{email}/g, inquiryData.email || "-")
+    .replace(/{layanan}/g, serviceName)
+    .replace(/{pesan_user}/g, inquiryData.message || serviceName);
 
   const mailOptions = {
-    from: process.env.EMAIL_FROM,
-    to: inquiryData.email, // Kirim ke Pelanggan
-    subject: "Permintaan Anda Telah Kami Terima - Exaque",
+    from: process.env.EMAIL_FROM || "Exaque <no-reply@exaque.com>",
+    to: inquiryData.email,
+    subject: `Konfirmasi Permintaan Diterima: ${serviceName} - PT Exaque Mandiri Makmur`,
     html: filledHtml,
   };
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`Email konfirmasi terkirim ke: ${inquiryData.email}`);
+    console.log(`Email konfirmasi terkirim ke customer: ${inquiryData.email}`);
   } catch (error) {
     console.error("Gagal mengirim email konfirmasi pelanggan:", error);
   }

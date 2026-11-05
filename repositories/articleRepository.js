@@ -26,8 +26,14 @@ const findArticleById = async (id) => {
 };
 
 const findArticleBySlug = async (slug) => {
+  const cleanSlug = (slug || "").trim().replace(/^\/+|\/+$/g, "");
   return await Article.findOne({
-    where: { slug },
+    where: {
+      [db.Sequelize.Op.or]: [
+        { slug: cleanSlug },
+        { slug: `${cleanSlug}/` },
+      ],
+    },
     include: includeAssociations,
   });
 };
