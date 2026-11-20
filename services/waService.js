@@ -50,6 +50,7 @@ const sendInquiryWhatsApp = async (inquiryData) => {
   
 *Nama:* ${inquiryData.first_name || '-'} ${inquiryData.last_name || ''}
 *Email:* ${inquiryData.email || '-'}
+*No. Telepon:* ${inquiryData.phone_number || '-'}
 *Perusahaan:* ${inquiryData.company || '-'}
 *Jabatan:* ${inquiryData.job_title || '-'}
 *Kebutuhan:* ${inquiryData.service_needed || '-'}

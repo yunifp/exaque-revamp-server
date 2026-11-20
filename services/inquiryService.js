@@ -5,8 +5,13 @@ const { Op } = require("sequelize");
 
 const createInquiry = async (inquiryData) => {
   try {
-    
-    const newInquiry = await inquiryRepository.createInquiry(inquiryData);
+    const rawPhone = inquiryData.phone_number ?? inquiryData.phone ?? "";
+    const normalizedPhone = rawPhone.toString().trim() || null;
+
+    const newInquiry = await inquiryRepository.createInquiry({
+      ...inquiryData,
+      phone_number: normalizedPhone,
+    });
 
     // Kirim Notifikasi WA ke Admin secara asynchronous di background
     waService.sendInquiryWhatsApp(newInquiry).catch((waError) => {

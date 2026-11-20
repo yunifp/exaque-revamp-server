@@ -35,8 +35,8 @@ module.exports = (sequelize, DataTypes) => {
       
       title: { type: DataTypes.STRING, allowNull: false },
       slug: { type: DataTypes.STRING, allowNull: false, unique: true },
-      content: { type: DataTypes.TEXT, allowNull: false },
-      excerpt: { type: DataTypes.TEXT, allowNull: true },
+      content: { type: DataTypes.TEXT("long"), allowNull: false },
+      excerpt: { type: DataTypes.TEXT("long"), allowNull: true },
       featured_image_url: { type: DataTypes.STRING, allowNull: true },
       status: {
         type: DataTypes.ENUM("draft", "published", "archived"),

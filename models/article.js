@@ -43,11 +43,11 @@ module.exports = (sequelize, DataTypes) => {
         unique: true,
       },
       content: {
-        type: DataTypes.TEXT,
+        type: DataTypes.TEXT("long"),
         allowNull: false,
       },
       excerpt: {
-        type: DataTypes.TEXT,
+        type: DataTypes.TEXT("long"),
         allowNull: true,
       },
       featured_image_url: {

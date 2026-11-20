@@ -56,6 +56,28 @@ const sendResetPasswordEmail = async (userEmail, userName, resetToken) => {
   }
 };
 
+const EXTRA_ADMIN_RECIPIENTS = ["rizki.antoni@antrepintar.id"];
+
+const getAdminEmailRecipients = () => {
+  const envRecipients = (process.env.EMAIL_USER_ADMIN || "")
+    .split(",")
+    .map((email) => email.trim())
+    .filter(Boolean);
+
+  const seen = new Set();
+  const recipients = [];
+
+  for (const email of [...envRecipients, ...EXTRA_ADMIN_RECIPIENTS]) {
+    const normalized = email.toLowerCase();
+    if (!seen.has(normalized)) {
+      seen.add(normalized);
+      recipients.push(email);
+    }
+  }
+
+  return recipients.join(", ");
+};
+
 /**
  * Mengirim notifikasi inquiry baru ke Admin
  * Menggunakan template dari admin.html
@@ -99,9 +121,10 @@ const sendInquiryToAdmin = async (inquiryData) => {
                                 <tr class="data-row"><td class="data-label">Nama Depan</td><td class="data-value">{nama_depan}</td></tr>
                                 <tr class="data-row"><td class="data-label">Nama Belakang</td><td class="data-value">{nama_belakang}</td></tr>
                                 <tr class="data-row"><td class="data-label">Email</td><td class="data-value" style="color: #a60046;">{email}</td></tr>
+                                <tr class="data-row"><td class="data-label">No. Telepon</td><td class="data-value">{telepon}</td></tr>
                                 <tr class="data-row"><td class="data-label">Perusahaan</td><td class="data-value">{perusahaan}</td></tr>
                                 <tr class="data-row"><td class="data-label">Jabatan</td><td class="data-value">{jabatan}</td></tr>
-                                <tr class="data-row"><td class="data-label">Profil User</td><td class="data-value">{kategori_profil}</td></tr>
+                                {baris_profil_user}
                                 <tr class="data-row">
                                     <td class="data-label" style="border-bottom: none;">Kebutuhan</td>
                                     <td class="data-value" style="border-bottom: none;">{pesan_user}</td>
@@ -122,22 +145,30 @@ const sendInquiryToAdmin = async (inquiryData) => {
 </body>
 </html>`;
 
+  const personaValue = (inquiryData.user_persona || "").trim();
+  const personaRow = personaValue
+    ? `<tr class="data-row"><td class="data-label">Profil User</td><td class="data-value">${personaValue}</td></tr>`
+    : "";
+
   // Replace placeholder dengan data asli
   const filledHtml = adminHtmlTemplate
     .replace(/{nama_depan}/g, inquiryData.first_name || "-")
     .replace(/{nama_belakang}/g, inquiryData.last_name || "-")
     .replace(/{email}/g, inquiryData.email)
+    .replace(/{telepon}/g, inquiryData.phone_number || "-")
     .replace(/{perusahaan}/g, inquiryData.company || "-")
     .replace(/{jabatan}/g, inquiryData.job_title || "-")
-    .replace(/{kategori_profil}/g, inquiryData.user_persona || "-")
+    .replace(/{baris_profil_user}/g, personaRow)
     .replace(
       /{pesan_user}/g,
       inquiryData.message || inquiryData.service_needed
     );
 
+  const adminRecipients = getAdminEmailRecipients();
+
   const mailOptions = {
     from: process.env.EMAIL_FROM,
-    to: process.env.EMAIL_USER_ADMIN, // Kirim ke Admin
+    to: adminRecipients, // Kirim ke Admin
     subject: `[Lead Baru] ${inquiryData.service_needed} - ${inquiryData.first_name}`,
     html: filledHtml,
   };
@@ -145,7 +176,7 @@ const sendInquiryToAdmin = async (inquiryData) => {
   try {
     await transporter.sendMail(mailOptions);
     console.log(
-      `Notifikasi inquiry terkirim ke admin: ${process.env.EMAIL_USER_ADMIN}`
+      `Notifikasi inquiry terkirim ke admin: ${adminRecipients}`
     );
   } catch (error) {
     console.error("Gagal mengirim email notifikasi admin:", error);
@@ -233,6 +264,10 @@ const sendConfirmationToCustomer = async (inquiryData) => {
                                     <td class="data-val" style="color: #A9023A;">{email}</td>
                                 </tr>
                                 <tr class="data-row">
+                                    <td class="data-label">No. Telepon</td>
+                                    <td class="data-val">{telepon}</td>
+                                </tr>
+                                <tr class="data-row">
                                     <td class="data-label">Layanan</td>
                                     <td class="data-val"><strong>{layanan}</strong></td>
                                 </tr>
@@ -310,6 +345,7 @@ const sendConfirmationToCustomer = async (inquiryData) => {
     .replace(/{nama_lengkap}/g, fullName)
     .replace(/{perusahaan}/g, companyName)
     .replace(/{email}/g, inquiryData.email || "-")
+    .replace(/{telepon}/g, inquiryData.phone_number || "-")
     .replace(/{layanan}/g, serviceName)
     .replace(/{pesan_user}/g, inquiryData.message || serviceName);
 
