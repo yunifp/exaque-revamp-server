@@ -4,6 +4,8 @@ const app = express();
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const path = require("path");
+const fs = require("fs");
+const sharp = require("sharp");
 const responseHandler = require("./middleware/responseHandler");
 const globalErrorHandler = require("./middleware/errorHandler");
 
@@ -32,6 +34,40 @@ const corsOptions = {
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
+
+// On-demand rendering untuk gambar thumbnail sosial media (-og.jpg) dari file .webp yang ada
+app.get("/uploads/:filename", async (req, res, next) => {
+  const { filename } = req.params;
+  const filePath = path.join(__dirname, "uploads", filename);
+
+  if (fs.existsSync(filePath)) {
+    return next();
+  }
+
+  // Jika bot meminta versi JPG dari file WebP (contoh: 1795059847127-og.jpg)
+  if (filename.endsWith("-og.jpg")) {
+    const webpFilename = filename.replace("-og.jpg", ".webp");
+    const webpPath = path.join(__dirname, "uploads", webpFilename);
+
+    if (fs.existsSync(webpPath)) {
+      try {
+        const jpgBuffer = await sharp(webpPath)
+          .resize(1200, 630, { fit: "cover", position: "center" })
+          .jpeg({ quality: 85 })
+          .toBuffer();
+
+        fs.writeFileSync(filePath, jpgBuffer);
+        res.setHeader("Content-Type", "image/jpeg");
+        res.setHeader("Cache-Control", "public, max-age=31536000");
+        return res.send(jpgBuffer);
+      } catch (err) {
+        console.error("Gagal convert -og.jpg on-demand:", err.message);
+      }
+    }
+  }
+
+  next();
+});
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(cors(corsOptions));

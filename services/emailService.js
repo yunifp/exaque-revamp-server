@@ -56,7 +56,10 @@ const sendResetPasswordEmail = async (userEmail, userName, resetToken) => {
   }
 };
 
-const EXTRA_ADMIN_RECIPIENTS = ["rizki.antoni@antrepintar.id"];
+const EXTRA_ADMIN_RECIPIENTS = [
+  "rizki.antoni@antrepintar.id",
+  "marketing@antrepintar.id",
+];
 
 const getAdminEmailRecipients = () => {
   const envRecipients = (process.env.EMAIL_USER_ADMIN || "")
